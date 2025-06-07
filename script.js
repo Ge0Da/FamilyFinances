@@ -924,10 +924,12 @@ function setView(view, evt){
     document.querySelector('.import-export-controls').style.display=view==='transactions'?'flex':'none';
     document.querySelector('.event-editor').classList.remove('visible');
     document.querySelector('.info-panel').style.display=view==='transactions'?'none':'block';
+    document.querySelector('.document-panel').classList.toggle('visible',view==='documents');
     if(view==='budget'){ wheelAnimation=0; explodedCategory=null; Object.keys(segmentAnimations).forEach(id=>{ segmentAnimations[id]={scale:1,targetScale:1}; }); }
     else if(view==='timeline'){ riverAnimation=0; selectedEvent=null; }
     else if(view==='bubbles'){ createBubbles(); selectedBubble=null; }
     else if(view==='transactions'){ renderTransactionTable(); }
+    else if(view==='documents'){ updateDocumentList(); }
 }
 function adjustZoom(delta){ timelineZoom=Math.max(0.5,Math.min(3,timelineZoom+delta)); }
 function addLifeEvent(){
@@ -1118,6 +1120,122 @@ function exportTransactions(){
     const a=document.createElement('a');
     a.href=url; a.download='transactions.csv'; a.click();
 }
+// Document Tracker
+const docDefinitions=[
+  {id:'passport',name:'Passport Copy',category:'Identity',why:'Proof of identity for all filings',requirements:{}},
+  {id:'visa',name:'Visa Page',category:'Identity',why:'Shows legal entry status',requirements:{}},
+  {id:'resPermit',name:'Residence Permit',category:'Identity',why:'Required for long stay',requirements:{}},
+  {id:'entryExit',name:'Entry/Exit Record',category:'Identity',why:'Track days in China for 183-day and six-year rules',requirements:{options:['sixYear']}},
+  {id:'workPermit',name:'Work Permit',category:'Employment',why:'Authorization to work',requirements:{employment:['chinese','dual']}},
+  {id:'contract',name:'Employment Contract',category:'Employment',why:'Proof of employment terms',requirements:{}},
+  {id:'payslips',name:'Monthly Pay Slips',category:'Employment',why:'Evidence of salary received',requirements:{}},
+  {id:'taxCert',name:'Annual Tax Withholding Certificate',category:'Employment',why:'Required for tax filings or PR',requirements:{}},
+  {id:'siRegistration',name:'Social Insurance Registration',category:'Employment',why:'Shows enrollment in social insurance',requirements:{}},
+  {id:'marriageCert',name:'Marriage Certificate',category:'Family',why:'Needed for PR applications',requirements:{options:['applyPR']}},
+  {id:'birthCert',name:'Child Birth Certificate',category:'Family',why:'Supports childcare or education deduction',requirements:{deductions:['childcare','educationDed']}},
+  {id:'childPassport',name:'Child Passport',category:'Family',why:'ID for dependent visas and benefits',requirements:{deductions:['childcare','educationDed']}},
+  {id:'bankStmt',name:'Bank Statements',category:'Financial',why:'Proof of income deposits',requirements:{options:['applyPR']}},
+  {id:'siRecord',name:'Social Insurance Payment Record',category:'Financial',why:'Needed for PR or benefits',requirements:{options:['applyPR']}},
+  {id:'taxReturn',name:'Annual Tax Settlement Receipt',category:'Financial',why:'Proof of tax compliance',requirements:{options:['applyPR']}},
+  {id:'lease',name:'Lease Contract',category:'Housing',why:'Evidence of rental',requirements:{housing:['renting']}},
+  {id:'housingFapiao',name:'Housing Rent Fapiao',category:'Housing',why:'Needed for allowance or deduction',requirements:{housing:['renting'],allowances:['housing'],deductions:['rent']}},
+  {id:'housingAllowance',name:'Housing Allowance Statement',category:'Housing',why:'Records employer-provided housing benefit',requirements:{allowances:['housing']}},
+  {id:'propertyCert',name:'Property Ownership Certificate',category:'Housing',why:'Proof of owning home',requirements:{housing:['own']}},
+  {id:'mortgageReceipt',name:'Mortgage Interest Receipt',category:'Housing',why:'Support mortgage deduction',requirements:{housing:['own']}},
+  {id:'housingFund',name:'Housing Provident Fund Statement',category:'Financial',why:'Shows contributions',requirements:{options:['applyPR']}},
+  {id:'homeLeave',name:'Home Leave Tickets',category:'Travel',why:'Receipts for travel reimbursement',requirements:{allowances:['homeLeave']}},
+  {id:'childcareRec',name:'Childcare Receipts',category:'Deductions',why:'Prove childcare expenses',requirements:{deductions:['childcare']}},
+  {id:'eduFapiao',name:'Education Fee Fapiao',category:'Deductions',why:'Needed for education allowance or deduction',requirements:{allowances:['education'],deductions:['educationDed']}},
+  {id:'langFapiao',name:'Language Training Fapiao',category:'Deductions',why:'Proof of language course reimbursement',requirements:{allowances:['language']}},
+  {id:'donationRec',name:'Donation Receipt',category:'Deductions',why:'Supports charitable deduction',requirements:{deductions:['donation']}}
+];
+let documentStatus=JSON.parse(localStorage.getItem('docStatus')||'{}');
+function saveDocStatus(){localStorage.setItem('docStatus',JSON.stringify(documentStatus));}
+function getSelections(){
+  const emp=document.getElementById('employmentType').value;
+  const allowances=[...document.querySelectorAll('.allowance-option:checked')].map(c=>c.value);
+  const deductions=[...document.querySelectorAll('.deduction-option:checked')].map(c=>c.value);
+  const housing=document.getElementById('housingSituation').value;
+  const options=[...document.querySelectorAll('.other-option:checked')].map(c=>c.value);
+  return {emp,allowances,deductions,housing,options};
+}
+function isDocNeeded(doc,sel){
+  if(doc.requirements.employment && !doc.requirements.employment.includes(sel.emp)) return false;
+  if(doc.requirements.allowances && !doc.requirements.allowances.some(a=>sel.allowances.includes(a))) return false;
+  if(doc.requirements.deductions && !doc.requirements.deductions.some(d=>sel.deductions.includes(d))) return false;
+  if(doc.requirements.housing && !doc.requirements.housing.includes(sel.housing)) return false;
+  if(doc.requirements.options && !doc.requirements.options.some(o=>sel.options.includes(o))) return false;
+  return true;
+}
+function updateDocumentList(){
+  const sel=getSelections();
+  const list=document.getElementById('documentList');
+  list.innerHTML='';
+  const needed=docDefinitions.filter(d=>isDocNeeded(d,sel));
+  const cats={};
+  needed.forEach(d=>{if(!cats[d.category]) cats[d.category]=[]; cats[d.category].push(d);});
+  Object.entries(cats).forEach(([cat,docs])=>{
+    const catDiv=document.createElement('div');
+    catDiv.className='doc-category';
+    const done=docs.filter(d=>documentStatus[d.id]==='Complete').length;
+    const catHeader=document.createElement('h4');
+    catHeader.textContent=`${cat} (${done}/${docs.length})`;
+    const bar=document.createElement('div');
+    bar.className='progress-bar small';
+    bar.style.setProperty('--progress',docs.length?Math.round(done/docs.length*100)+'%':'0%');
+    catHeader.appendChild(bar);
+    catDiv.appendChild(catHeader);
+    docs.forEach(doc=>{
+      const card=document.createElement('div');
+      card.className='doc-card';
+      card.dataset.status=documentStatus[doc.id]||'NotStarted';
+      const name=document.createElement('span');
+      name.textContent=doc.name;
+      const tooltip=document.createElement('span');
+      tooltip.textContent='?';
+      tooltip.className='doc-tooltip';
+      tooltip.title=doc.why;
+      const select=document.createElement('select');
+      select.className='doc-status';
+      ['NotStarted','InProgress','Complete','NotApplicable'].forEach(s=>{
+        const opt=document.createElement('option');
+        opt.value=s; opt.textContent=s; select.appendChild(opt);
+      });
+      select.value=documentStatus[doc.id]||'NotStarted';
+      select.onchange=()=>{documentStatus[doc.id]=select.value;saveDocStatus();updateProgress();updateDocumentList();};
+      card.appendChild(name);
+      card.appendChild(select);
+      card.appendChild(tooltip);
+      catDiv.appendChild(card);
+    });
+    list.appendChild(catDiv);
+  });
+  updateProgress();
+  const warnings=[];
+  if(sel.allowances.length>0) warnings.push('Fapiao required for selected allowances.');
+  if(sel.options.includes('sixYear')) warnings.push('Keep entry/exit logs to manage six-year rule.');
+  if(sel.options.includes('applyPR')) warnings.push('PR may lead to worldwide tax obligations.');
+  document.getElementById('docWarnings').textContent=warnings.join(' ');
+}
+function updateProgress(){
+  const sel=getSelections();
+  const needed=docDefinitions.filter(d=>isDocNeeded(d,sel));
+  const total=needed.length;
+  const done=needed.filter(d=>documentStatus[d.id]==='Complete').length;
+  const percent=total?Math.round((done/total)*100):0;
+  const bar=document.getElementById('docProgress');
+  if(bar){
+    bar.style.setProperty('--progress',percent+'%');
+  }
+  const text=document.getElementById('docProgressText');
+  if(text) text.textContent=percent+'%';
+}
+function initDocTracker(){
+  document.querySelectorAll('.allowance-option,.deduction-option,#employmentType,#housingSituation,.other-option').forEach(el=>{
+    el.addEventListener('change',updateDocumentList);
+  });
+  updateDocumentList();
+}
 window.addEventListener('resize',()=>{ resize(); createParticles(); if(currentView==='bubbles') createBubbles(); });
 if(!ctx.roundRect){ CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){ this.beginPath(); this.moveTo(x+r,y); this.lineTo(x+w-r,y); this.quadraticCurveTo(x+w,y,x+w,y+r); this.lineTo(x+w,y+h-r); this.quadraticCurveTo(x+w,y+h,x+w-r,y+h); this.lineTo(x+r,y+h); this.quadraticCurveTo(x,y+h,x,y+h-r); this.lineTo(x,y+r); this.quadraticCurveTo(x,y,x+r,y); this.closePath(); }; }
 canvas.addEventListener('mousemove',handleMouseMove);
@@ -1130,5 +1248,6 @@ resize();
 createParticles();
 renderTransactionTable();
 updateBudgetFromTransactions();
+initDocTracker();
 setView('transactions');
 draw();

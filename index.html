@@ -15,6 +15,7 @@
             <button class="view-tab" onclick="setView('budget', event)">Budget Wheel</button>
             <button class="view-tab" onclick="setView('timeline', event)">Timeline</button>
             <button class="view-tab" onclick="setView('bubbles', event)">Expenses</button>
+            <button class='view-tab' onclick="setView('documents', event)">Documents</button>
         </div>
         
         <div class="info-panel">
@@ -132,6 +133,70 @@
                 </table>
             </div>
         </div>
+        <div class="document-panel">
+            <h3>Smart Document Tracker</h3>
+            <div class="doc-config">
+                <div class="form-group">
+                    <label>Employment Type</label>
+                    <select id="employmentType">
+                        <option value="chinese">Chinese Employer</option>
+                        <option value="foreign">Foreign Employer</option>
+                        <option value="dual">Dual Employment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Expat Allowances</label>
+                    <div class="checkbox-list">
+                        <label><input type="checkbox" value="housing" class="allowance-option"> Housing</label>
+                        <label><input type="checkbox" value="education" class="allowance-option"> Education</label>
+                        <label><input type="checkbox" value="language" class="allowance-option"> Language Training</label>
+                        <label><input type="checkbox" value="homeLeave" class="allowance-option"> Home Leave</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Deductions</label>
+                    <div class="checkbox-list">
+                        <label><input type="checkbox" value="childcare" class="deduction-option"> Childcare &lt;3</label>
+                        <label><input type="checkbox" value="educationDed" class="deduction-option"> Child Education</label>
+                        <label><input type="checkbox" value="rent" class="deduction-option"> Housing Rent</label>
+                        <label><input type="checkbox" value="donation" class="deduction-option"> Donation</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Housing Situation</label>
+                    <select id="housingSituation">
+                        <option value="renting">Renting</option>
+                        <option value="own">Own Home</option>
+                        <option value="employer">Employer Provided</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Other Options</label>
+                    <div class="checkbox-list">
+                        <label><input type="checkbox" value="sixYear" class="other-option"> Track Six-Year Rule</label>
+                        <label><input type="checkbox" value="applyPR" class="other-option"> Pursuing PR</label>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="docProgress"></div>
+                <span id="docProgressText">0%</span>
+            </div>
+            <div id="docWarnings" class="doc-warnings"></div>
+            <div id="documentList" class="document-list"></div>
+<div id="taxGuide" class="guide-text" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto; margin-top:20px;">
+PASTED_TEXT_1_START
+Taxation and Residency Guide for a Foreign Academic in Sanya, Hainan (2025)
+Introduction
+A foreign academic beginning work in Sanya (Hainan) in 2025 faces a complex landscape of Chinese tax regulations, residency rules, and visa considerations. This guide provides a comprehensive overview tailored to an academic employed by a Chinese Academy of Sciences (CAS) institution, earning a gross base salary of ¥310,000 plus a ¥50,000 annual bonus (performance-based). It addresses how China’s Individual Income Tax (IIT) system applies to expatriates, how tax residency is determined, what income tax rates and deductions will apply, and what special exemptions or incentives might benefit the academic. The guide also covers family considerations – such as deductions for a non-working spouse and a young child – and outlines social insurance obligations. Finally, it explores long-term residency pathways for the academic and his family, including talent visas and permanent residence options. All information is up-to-date for 2025 and supported by references to relevant laws, regulations, and official policies.
+...
+PASTED_TEXT_1_END
+PASTED_TEXT_2_START
+A Comprehensive Guide to Individual Income Tax in China for Expatriate Academics in Hainan (2025 and Beyond)Disclaimer: This guide is prepared based on the information provided and publicly available tax laws and regulations as of early 2025. Tax laws are subject to change, and their application can be complex. This guide is for informational purposes only and should not be considered a substitute for professional tax advice from a qualified advisor familiar with your specific situation. You are strongly encouraged to consult with the local tax authorities or a tax professional for personalized guidance.
+...
+PASTED_TEXT_2_END
+</div>
+</div>
         
         <div class="timeline-controls">
             <div class="zoom-controls">
