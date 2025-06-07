@@ -694,7 +694,6 @@ function draw(){
     if(currentView==='transactions'){
         ctx.fillStyle='#0a0a0a';
         ctx.fillRect(0,0,width,height);
-        return;
     } else if(currentView==='flow'){
         drawFlowView();
     } else if(currentView==='budget'){
