@@ -1,6 +1,10 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const tooltip = document.getElementById('tooltip');
+const transDateInput = document.getElementById('transDate');
+if (transDateInput) {
+    transDateInput.value = new Date().toISOString().split('T')[0];
+}
 
 let width, height;
 let particles = [];
