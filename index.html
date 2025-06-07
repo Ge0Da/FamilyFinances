@@ -72,11 +72,11 @@
     <div id="app">
         <canvas id="canvas"></canvas>
         <div class="view-tabs">
-            <button class="view-tab active" onclick="setView('transactions')">Transactions</button>
-            <button class="view-tab" onclick="setView('flow')">Cash Flow</button>
-            <button class="view-tab" onclick="setView('budget')">Budget Wheel</button>
-            <button class="view-tab" onclick="setView('timeline')">Timeline</button>
-            <button class="view-tab" onclick="setView('bubbles')">Expenses</button>
+            <button class="view-tab active" onclick="setView('transactions', event)">Transactions</button>
+            <button class="view-tab" onclick="setView('flow', event)">Cash Flow</button>
+            <button class="view-tab" onclick="setView('budget', event)">Budget Wheel</button>
+            <button class="view-tab" onclick="setView('timeline', event)">Timeline</button>
+            <button class="view-tab" onclick="setView('bubbles', event)">Expenses</button>
         </div>
         
         <div class="info-panel">
@@ -205,11 +205,11 @@
         </div>
         
         <div class="bubble-controls">
-            <button class="bubble-filter active" onclick="setBubbleView('month')">This Month</button>
-            <button class="bubble-filter" onclick="setBubbleView('week')">This Week</button>
-            <button class="bubble-filter" onclick="setBubbleView('all')">All Time</button>
+            <button class="bubble-filter active" onclick="setBubbleView('month', event)">This Month</button>
+            <button class="bubble-filter" onclick="setBubbleView('week', event)">This Week</button>
+            <button class="bubble-filter" onclick="setBubbleView('all', event)">All Time</button>
             <span style="margin: 0 10px; color: #64748b;">|</span>
-            <button class="bubble-filter" onclick="togglePhysics()">Physics: ON</button>
+            <button class="bubble-filter" onclick="togglePhysics(event)">Physics: ON</button>
         </div>
         
         <div class="controls">
@@ -276,8 +276,16 @@
             travel: { color: '#06b6d4', icon: '✈️' }
         };
         // Sample transactions for bubble view (will be replaced by user input)
-        let transactions = localStorage.getItem('familyFinanceTransactions') ? 
-            JSON.parse(localStorage.getItem('familyFinanceTransactions')).map(t => ({ ...t, date: new Date(t.date) })) : [
+        let transactions;
+        try {
+            const stored = localStorage.getItem('familyFinanceTransactions');
+            if (stored) {
+                transactions = JSON.parse(stored).map(t => ({ ...t, date: new Date(t.date) }));
+            }
+        } catch (err) {
+            console.warn('localStorage unavailable, using defaults', err);
+        }
+        if (!transactions) transactions = [
             { id: Date.now() + 1, name: 'Grocery Store', amount: 156, category: 'food', type: 'expense', date: new Date(2024, 5, 25), recurring: false },
             { id: Date.now() + 2, name: 'Parent 1 Salary', amount: 5500, category: 'income', type: 'income', date: new Date(2024, 5, 1), recurring: true },
             { id: Date.now() + 3, name: 'Parent 2 Salary', amount: 2800, category: 'income', type: 'income', date: new Date(2024, 5, 1), recurring: true },
@@ -1102,10 +1110,10 @@
             offset.x=0; offset.y=0; timelineOffset.x=0; timelineZoom=1; wheelAnimation=0; explodedCategory=null;
             Object.keys(segmentAnimations).forEach(id=>{ segmentAnimations[id]={scale:1,targetScale:1}; });
         }
-        function setView(view){
+        function setView(view, evt){
             currentView=view;
             document.querySelectorAll('.view-tab').forEach(tab=>{ tab.classList.remove('active'); });
-            event.target.classList.add('active');
+            if(evt) evt.target.classList.add('active');
             if(view==='timeline'){
                 const currentFlow=getProjectedCashFlow(0,0);
                 const futureFlow=getProjectedCashFlow(5,0);
@@ -1167,16 +1175,16 @@
             }
             document.querySelector('.event-editor').classList.remove('visible');
         }
-        function setBubbleView(view){
+        function setBubbleView(view, evt){
             bubbleView=view;
             createBubbles();
             document.querySelectorAll('.bubble-filter').forEach(btn=>{ if(btn.textContent.includes('Month')||btn.textContent.includes('Week')||btn.textContent.includes('All')) btn.classList.remove('active'); });
-            event.target.classList.add('active');
+            if(evt) evt.target.classList.add('active');
             setView('bubbles');
         }
-        function togglePhysics(){
+        function togglePhysics(evt){
             bubblePhysics=!bubblePhysics;
-            event.target.textContent=`Physics: ${bubblePhysics?'ON':'OFF'}`;
+            if(evt) evt.target.textContent=`Physics: ${bubblePhysics?'ON':'OFF'}`;
             if(!bubblePhysics){
                 const cols=Math.ceil(Math.sqrt(bubbles.length));
                 const cellW=width/cols;
@@ -1190,7 +1198,13 @@
                 });
             }
         }
-        function saveTransactions(){ localStorage.setItem('familyFinanceTransactions',JSON.stringify(transactions)); }
+        function saveTransactions(){
+            try {
+                localStorage.setItem('familyFinanceTransactions', JSON.stringify(transactions));
+            } catch (err) {
+                console.warn('Could not save transactions to localStorage', err);
+            }
+        }
         function updateTransactionSummary(){
             const now=new Date();
             const currentMonth=now.getMonth();
