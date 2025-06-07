@@ -59,3 +59,21 @@ button.active { background: #3b82f6; border-color: #60a5fa; }
 .summary-card { background: rgba(30, 41, 59, 0.5); padding: 15px 20px; border-radius: 8px; flex: 1; }
 .summary-card h3 { font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
 .summary-card .value { font-size: 24px; font-weight: bold; }
+.document-panel { position: absolute; top: 80px; left: 20px; right: 20px; bottom: 80px; background: rgba(20,20,20,0.9); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; overflow-y: auto; display: none; flex-direction: column; }
+.document-panel.visible { display: flex; }
+.document-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.doc-card { background: rgba(30,41,59,0.5); padding: 10px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+.doc-status { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; padding: 4px 8px; }
+.progress-bar-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.progress-bar { height: 10px; flex: 1; background: #334155; border-radius: 5px; overflow: hidden; position: relative; }
+.progress-bar::after { content: ''; position: absolute; top: 0; left: 0; height: 100%; background: #4ade80; width: var(--progress,0%); transition: width 0.3s; }
+.checkbox-list { display: flex; flex-direction: column; gap: 3px; margin-top: 5px; }
+.doc-tooltip { font-size: 12px; color: #94a3b8; margin-left: 10px; cursor: pointer; }
+.guide-text{background:rgba(30,41,59,0.4);padding:10px;border-radius:8px; font-size:12px;}
+.doc-category{margin-top:15px;}
+.doc-category h4{font-size:14px;color:#e2e8f0;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;}
+.progress-bar.small{height:6px;}
+.doc-card[data-status="Complete"]{border-left:4px solid #4ade80;}
+.doc-card[data-status="InProgress"]{border-left:4px solid #facc15;}
+.doc-card[data-status="NotApplicable"]{border-left:4px solid #94a3b8;opacity:0.6;}
+.doc-warnings{color:#fcd34d;font-size:12px;margin-top:10px;}
